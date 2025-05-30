@@ -1,0 +1,1155 @@
+3 data nodes will be here 
+t3 small for testing 
+
+create vpc with security groups and open https 
+fine grane access open for domain_name
+user id password we have to create user with Iam and then I have to map them 
+
+Iam roles access for login 
+
+scheduling snapshot in every hour so create cron job 
+snapshot repository by accessing OpenSearch Dashboards in your domain and navigating to Snapshots Managements, Repositories.
+
+
+Transcript for [Automate Your OpenSearch/Elasticsearch Backups with S3 and Lambda: A Complete Guide](https://www.youtube.com/watch?v=nGBQ-0A95J0) by [Merlin AI](https://merlin.foyer.work/)
+
+0:00 - hello everyone today we have another
+0:02 - interesting topic what I'll do is I'll
+0:04 - show you for an open search or an
+0:06 - elastic search cluster how and I'll use
+0:08 - the latest version of open search so how
+0:10 - we can take snapshots because we have
+0:13 - multiple ways using a curator or using
+0:16 - APA I show the methodology using Lambda
+0:18 - as well as using event on how we could
+0:20 - do both it could be daily it could be
+0:21 - hourly or any frequency that you want
+0:24 - and that will ensure that your data for
+0:26 - elastic search or open search is
+0:28 - maintained and you have backup for that
+0:30 - as well in this process what I'll also
+0:32 - do is I'll show you how to go about
+0:33 - creating a VPC set creating a cluster as
+0:36 - well as I'll show the new gu which is
+0:38 - the open search dashboard earlier it was
+0:40 - called kibana and how the what setup is
+0:42 - required for that as well but before we
+0:44 - get get to that as usual please like
+0:47 - subscribe share our Channel also we have
+0:49 - released our Weekly Newsletter please
+0:51 - subscribe to that so that you are up to
+0:53 - date on the latest Cloud Technologies
+0:55 - and Trends so without further Ado let's
+0:57 - get to it
+1:00 - [Music]
+1:14 - conso in my portal in ews what I'll do
+1:18 - is I'll first go to open search and this
+1:20 - is where I need to create a new cluster
+1:23 - I'll create a
+1:24 - domain AA domain and don't choose this I
+1:28 - think in the previous video one of the
+1:30 - videos we had done don't choose this
+1:31 - just choose easy crate because easy
+1:32 - crate will go and create a lot of nodes
+1:35 - you don't need it and I don't need
+1:36 - production I just need D because I'm
+1:37 - just demonstrating to you all I don't
+1:39 - need standby I just need one easy it's
+1:41 - going to show a yellow status but that's
+1:43 - fine I said chck pick the latest one
+1:45 - like obviously we have worked with all
+1:47 - old versions as well but just for the
+1:49 - sake of this I'll show you the latest
+1:50 - setup as well obviously for elastic such
+1:52 - memories they going to be important and
+1:54 - I'll just choose because this just for
+1:55 - demonstration purposes and if I can
+1:57 - choose a lure instance uh let me see
+2:00 - there's a m M5 family that I could use
+2:03 - probably not so let me try reducing and
+2:06 - see I guess a probably not memory
+2:09 - optimized maybe a general purpose is
+2:11 - what I could choose I could I'll just go
+2:13 - with the T3 small and I just need one
+2:16 - node to start and I'm not focusing on
+2:19 - the architecture I'm not focusing on the
+2:21 - replica my intent is only to show in
+2:24 - this video how to go about taking a
+2:26 - snapshot deleting a snapshot so you have
+2:30 - back up in open search AKA elastic
+2:32 - search this is the same you could apply
+2:34 - the same methodology to elastic search
+2:35 - right it was in fact before just turn
+2:37 - year ago this was the same it was
+2:39 - elastic such called at just that elastic
+2:41 - such wanted to take out the licensing
+2:43 - and no longer open source that's what
+2:45 - the setup is I don't need 10g 100 GB I
+2:48 - just need probably it should be 10 okay
+2:51 - so I just need 10 uh 3,000 probably is
+2:54 - fine I don't need a dedicative master
+2:56 - note I don't need any of this I don't
+2:57 - need a custom end point I I'll give
+3:00 - Public Access uh but you should
+3:02 - definitely have EPC but for this I'll
+3:04 - just keep it public and uh you would
+3:08 - want to have uh right finder and access
+3:10 - control andit meet his du this for now
+3:12 - and I'll treat a master user because I
+3:15 - don't want to kind of get to the part
+3:17 - give a username that VI a
+3:22 - password no of this I need as of now I
+3:25 - don't need any of those uh let's leave
+3:28 - it for 9 uh rise so this is we Anyway
+3:31 - come back and change it you should have
+3:33 - this and definitely you should
+3:34 - definitely go for your own encryption
+3:36 - key but I'll justly with default for now
+3:39 - and this is where you could have the
+3:41 - peak window automatic software update
+3:44 - and any cluster setting that you will
+3:45 - have that's a simple setup nothing much
+3:48 - just go with uh don't go go with
+3:49 - standard don't go with easy crit if you
+3:51 - want to do it but if you have an
+3:52 - Enterprise yes look into easy create but
+3:55 - look into the amount of nodes you want
+3:57 - because you don't want to pay
+3:58 - unnecessarily for comp cute so click
+4:02 - create it'll take some time and uh in
+4:05 - the meanwhile let me go and show what
+4:07 - all is required for the open search
+4:10 - cluster so while the cluster has been
+4:12 - created just wanted to show the setup of
+4:15 - how we're going to be going about taking
+4:17 - a snapshot you don't need to have a
+4:18 - Lambda function you could always use a
+4:20 - CLI or a command line you could have a
+4:22 - Cron job as part of your Linux instance
+4:24 - and do it that in number of is I just
+4:26 - want to show in s's metodology instead
+4:29 - of you have having Tois the Computing
+4:30 - senses on how you go about taking the
+4:33 - snapshot assisting it an S3 bucket and
+4:35 - actually that's one of the one I can put
+4:38 - it S3 and this is the it will take the
+4:41 - snapshot and versus two S3 bucket here
+4:45 - so that is the architecture we're going
+4:47 - to be falling to ensure that the
+4:49 - snapshots are taking place so with this
+4:52 - let's go back to the cluster and by now
+4:54 - it should be created at in the Meer if
+4:56 - it is not we'll go to the lamb de
+4:57 - creation we can see the cluster is still
+5:00 - a CR Faith person did it does take some
+5:02 - time meanwhile and this is where you
+5:03 - could click and see the status so let's
+5:05 - give it a few more minutes probably 30
+5:07 - minutes 40 minutes in the meanwhile
+5:10 - let's start preparing the the other
+5:12 - stuff that is the Lambda the event
+5:14 - Bridge the S3 bucket so let's create an
+5:17 - S3 Bucket over here and I'd you'd want
+5:19 - to have this old scripted cloud
+5:21 - formation but I'm just going to do it
+5:22 - from the console just use this bucket
+5:25 - and mention the open search snapshot I
+5:28 - think this name may be taken let me put
+5:30 - YT that I don't need anything is Shields
+5:34 - it's all disabled default is fine and it
+5:38 - should be good to go so I have this
+5:40 - bucket which is now
+5:44 - ready so this is the bucket so now let's
+5:46 - start preparing the Lambda
+5:49 - function so here what I could do I could
+5:52 - come here and this is where I could give
+5:54 - the like say I want a daily snapshot and
+5:57 - I can come here and I'll like coding in
+5:59 - pon so I'll just choose python you could
+6:02 - choose any language doesn't matter now
+6:04 - this is where I need to create a new
+6:05 - rule so let me I'll flip and go to
+6:08 - creating a new rule this is where I come
+6:11 - here open a new tab planned create a
+6:15 - rule actually yeah this is come here
+6:17 - create a roll and click create roll and
+6:21 - just choose ec2 or Lambda because it
+6:23 - puts a policy if you choose openid let
+6:26 - me show you what I mean
+6:30 - it'll just go and add this policy and I
+6:33 - I don't want have this I just prefer
+6:34 - little flexibility so you don't need
+6:37 - need this policy so come here and choose
+6:39 - say ec2 choose this one click next and
+6:44 - leave this by default you don't need any
+6:45 - of these policies actually well you do
+6:48 - need it because it's going to be used in
+6:49 - a Lambda so actually let me go back this
+6:52 - is for a Lambda so let me choose the
+6:53 - Lambda so Lambda is good because we need
+6:55 - to create another rule I'll show you
+6:57 - later but Lambda you can just create it
+6:59 - choose the VPC actually there is no VPC
+7:02 - here in my setup so I don't need the VPC
+7:04 - policy and I can just hit next and
+7:07 - choose open search
+7:11 - or and creatr I didn't W this uh let's
+7:15 - see maybe it was some check box I had
+7:18 - left checked just check the trust
+7:20 - relationship there you go so Lambda is
+7:23 - good and now here what we need to do
+7:26 - need to put the policy you shouldn't it
+7:29 - says you shouldn't use in line policy
+7:31 - I'm totally good with it because it
+7:32 - doesn't make sense for me to go about
+7:34 - creating a manag policy when I know that
+7:36 - this policy is only go used to good to
+7:39 - be used by this rule so that's where I'm
+7:42 - fine but try to listen to everybody and
+7:45 - use your judgment on doing what is the
+7:47 - right thing to do so this is where you
+7:49 - come here and we will make the policy
+7:51 - out here so what we need to do this as a
+7:55 - like sh this is the Lambda Rule and I
+7:57 - have the policy like drafted so that me
+8:01 - get the policy this is the
+8:03 - policy this is the policy that needs to
+8:06 - be part of the rule so this is the under
+8:09 - one other rule that we first need to be
+8:11 - creative so let me create this rule
+8:13 - because the way it works in for the
+8:16 - Lambda to take the stap shot is this is
+8:18 - the one rule that needs to be assumed by
+8:21 - open search and that is where this rule
+8:23 - needs to be created because this rle is
+8:26 - and this rle will need to be marked to
+8:27 - in the portal in the dashboard so that
+8:31 - the require permissions then I'll get to
+8:33 - those steps so it is less confusing but
+8:35 - let me go ahead and create this road
+8:37 - here so I can come here open a new tab
+8:41 - click create roll and this is where I
+8:44 - was seeing just choose for our to we
+8:46 - will change this
+8:48 - later and you can just skip this and
+8:51 - just give me and just gives this name
+8:55 - and create the rule
+8:59 - come here now this is where we need to
+9:01 - gender trust relationships so come here
+9:03 - edit the Rel those set up here and you
+9:06 - can just take an open search and this
+9:09 - should work and if you want you can make
+9:11 - it here for elastic as well you can make
+9:13 - it
+9:20 - for so this should take another that R
+9:23 - assumption what this is seeing is that
+9:26 - the service open search or elastic
+9:28 - search can assume this rule that is what
+9:30 - we are seen so I have B this thing and
+9:33 - now what in this policy I'll come and
+9:36 - make her I'll give the required
+9:38 - permission I could OB use this but I
+9:40 - have the policy drafted so let me come
+9:42 - here and this is the policy that I need
+9:45 - to use and for you all you could I could
+9:48 - zoom in if you see this is where what
+9:50 - I'm saying is that this particular Ro
+9:52 - should have access to list the bucket
+9:53 - because this is the bucket where the
+9:55 - Snapchats would be put and they I should
+9:58 - be able to do a could just do a put
+10:00 - object here and up for the get star
+10:02 - object but this is where you want to use
+10:04 - the domain so the domain let me get the
+10:07 - domain and you you want to restrict it
+10:10 - to the required permission but for the
+10:12 - sake of this video I'll just give full
+10:14 - 10 last thing I want to Bo St deep the
+10:16 - permission issue so let me just get the
+10:18 - domain in so the domain is creative as
+10:21 - you see and this is the Ern of the
+10:26 - setup and if I come here I can just
+10:29 - put this in there and essentially what
+10:33 - I'm saying is anything in this domain
+10:36 - this particular rule should have access
+10:38 - to do and this is a pretty powerful rule
+10:40 - so don't give this all start change it
+10:43 - so what I do I'll take this permission
+10:45 - now and put it in the rule and all the
+10:47 - score policies are will to be part of
+10:49 - the blog all you have to do is just
+10:51 - subscribe to to the blog there is no
+10:53 - credit card nothing information required
+10:55 - you just have to enter your old
+10:56 - credential just so there be no beer you
+10:58 - are not a bot you I be a user and you be
+11:01 - you have you can have access to the blog
+11:02 - and all this scord as but so now I come
+11:05 - here and I can just replace this policy
+11:09 - I can give a name I like to us follow
+11:12 - the name Convention of giving the rule
+11:15 - and just change it to
+11:18 - policy and create the policy so the
+11:21 - policy is created the rule is created
+11:24 - and this is the rule that need to give
+11:26 - into the Lambda
+11:29 - policy here so let me go back to notepad
+11:32 - and show that Json so this is the the
+11:35 - Json for the Lambda Rule and this is
+11:37 - where I will be putting the drn offer
+11:41 - setup and this is the bucket here that
+11:43 - is required and what I'm just saying is
+11:45 - that I should have the get cor identity
+11:47 - access I should be able to list the
+11:49 - buckets I probably don't need this one I
+11:51 - just need this S3 put object I can if
+11:53 - requ I can move it but I don't know do
+11:55 - have been get debuging or fing
+11:57 - permissions so which is well this setup
+12:00 - is requirement let me copy this policy
+12:03 - and put it in the I am setup so this is
+12:05 - the the new policy that's going to be
+12:09 - there and I can create the policy and I
+12:12 - can give the same
+12:19 - name so now we have the Lambda rule that
+12:23 - we are going to be using here and this
+12:26 - rule is going to be assumed by open
+12:28 - search
+12:29 - I hope it is not confusing and if you're
+12:32 - still confused you can go back watch the
+12:34 - video again or read all these steps in
+12:37 - the bloggers with so I take this
+12:41 - name and I
+12:44 - mean I come here and this is fine I use
+12:48 - an existing rule don't do create a new
+12:51 - rule because first of all the name is
+12:52 - going to be a totally different naming
+12:55 - convention you wouldn't want that many
+12:57 - organizations wouldn't want that you
+12:58 - would want to create a you create a rule
+13:00 - as the way I show you give the required
+13:03 - permission and it'll be less so uh less
+13:06 - bad name right you will you'd be hearing
+13:07 - a much M to name so choose
+13:10 - this and if you have listen a VPC you
+13:13 - could you could do this but I do it
+13:14 - public access right I just wanted to
+13:16 - show you I didn't want to get get into
+13:17 - the VPC there tons of videos out there
+13:19 - where you can check out the VPC and all
+13:21 - those details and any tagging as well
+13:24 - you can uh you should have tags uh I'll
+13:26 - just cani needed for now so I'll go
+13:28 - ahead and and create the function so now
+13:31 - this function is created and what I what
+13:34 - I need is I need a few things uh as part
+13:36 - of this so first of all let me go and
+13:38 - change this configuration because for
+13:40 - the taking a snapshot and this is where
+13:43 - it's a daily snapshot I need to be I can
+13:46 - leave this
+13:47 - thing
+13:51 - snapshot let's change it to yeah this
+13:53 - that's Spang and I'll just you make it
+13:55 - 15 minutes that's the max time out for
+13:57 - Lambda because taking a snapshot can
+14:00 - Tick T obviously may not be 3 seconds
+14:03 - but uh 5 five minutes will be done but
+14:05 - depending on your open search data size
+14:08 - it can take a long time as well which is
+14:10 - where you better off this good 15
+14:11 - minutes and can might be like we have
+14:13 - come so many clusters where we have
+14:16 - worked on large diaby set of data
+14:18 - probably not terabyte but but we have
+14:21 - been able to pick the backups in 15
+14:24 - minutes so this is what we have done now
+14:27 - a few other things we need to do is we
+14:30 - need to create a layer so I hope you all
+14:33 - know what is a layer in Lambda a layer
+14:36 - essentially is that instead of me
+14:38 - zipping now because and what I will be
+14:40 - doing as part of the scod is I can go
+14:43 - ahead and use a curator and if you see
+14:46 - in like elastic search documentation
+14:49 - that is going to be elastic search curo
+14:51 - using that you can take a snapshot you
+14:53 - can delete a snapshot and you can do a
+14:56 - lot more with the curator and we through
+14:58 - use curator lock
+14:59 - the second option which I'm going to
+15:01 - show you the code for is using open
+15:03 - search EPA and this is where I'm using
+15:06 - ews Epi the same concept could be done
+15:08 - at elastic search it's not B there's no
+15:10 - difference the is available elastic
+15:12 - search as well but because I'm in open
+15:14 - search and I find less packages to be
+15:17 - done I'll just go with the EPA based
+15:19 - approach so let me show first for that I
+15:22 - need to create a layer what clears is
+15:24 - essentially a package of all the
+15:26 - libraries that are required for and in
+15:28 - this case is going to be taking the
+15:30 - snapshot you can read a go and read
+15:32 - about layers it's there's a lot of
+15:34 - document the documentation as well if
+15:36 - you have questions comments on how to
+15:39 - create the layer uh please drop a
+15:41 - comment and we try our best to answer
+15:43 - your question well essentially the r
+15:45 - structure should be for sake of time
+15:47 - I've already taken the zip but the r
+15:49 - structure is it there should be a python
+15:51 - folder and in the python folder I should
+15:54 - have all the repositories on sorry all
+15:57 - the light re that are required in this
+15:59 - case it is elastic such as what I
+16:01 - required this is another than we I
+16:03 - required if this request is going to be
+16:05 - important because I'm going to be using
+16:07 - apas and similarly the supporting
+16:09 - packages are going to be required as
+16:11 - well so what I just need to do I need to
+16:14 - just but zip this spine and this is the
+16:16 - fine that I need to import as so let me
+16:20 - show you the import
+16:22 - process so now if I come here and I go
+16:26 - to the layer what I need to do is I need
+16:28 - to create a layer and this is there if
+16:31 - you see my layer is I take Snapchat I
+16:34 - can just say but take open search
+16:36 - snapchat because this is I be the
+16:39 - requiring I description is optional I
+16:43 - feel free to give a description and
+16:49 - um so yeah this is the description is
+16:52 - optional this is the zip I uploaded
+16:54 - choose the front tanks but I just make
+16:57 - to Slick boot choose the
+16:59 - the iton version and just choose a few
+17:02 - others if you feel that may want to down
+17:04 - print but this is the package that you
+17:07 - create the alterate if I don't do this
+17:09 - approach is what I need to do is I will
+17:11 - need to package all the dysfunction
+17:14 - including the the packages or Python and
+17:17 - then I will need to upload it as a zip
+17:20 - fine so let me show you what I mean how
+17:23 - how I have to do that then better
+17:30 - so if I go
+17:33 - here and the way I would be doing is I
+17:36 - would be like creating a zip file and
+17:39 - this is how I'd be doing which will have
+17:41 - the code and it will have all the
+17:43 - packages but the isue with that is I
+17:45 - will not be able to edit the code as I
+17:47 - do and it won't be so lightwe it'll be a
+17:50 - bulky one because if you imagine if I
+17:51 - have to do this for 10 similar like
+17:54 - style I will be having 10 set zip file
+17:57 - which is unnecessary and probably it to
+17:59 - be cost more as well so you don't need
+18:00 - to do that we have this uh setup done in
+18:03 - layer so we what we need to do is we
+18:05 - need to add the layer as well so this is
+18:07 - where I come I choose the custom layer
+18:10 - and I choose this this going be the
+18:12 - first
+18:13 - version click T and now your layer
+18:16 - should be added here now we need to come
+18:19 - here and add the code to be able to take
+18:22 - the snapshot let me show you the code
+18:24 - that I have written and this code will
+18:26 - be also available in the blog so you can
+18:28 - check it out from there as well okay so
+18:30 - this is the code as you can see a few
+18:33 - libraries I'm using B 3 forw requests
+18:35 - for the EPI and I want go each line
+18:38 - essentially what I'm going to do is I'm
+18:39 - going to get these variables I'm going
+18:40 - to put as a la variable get the cenal
+18:44 - get the time stamp because I would want
+18:46 - to have the option of putting the
+18:48 - snapshot at the time stamp that's it
+18:50 - that is what I'm read here put this in
+18:52 - the Bas part S3 bot URL and accordingly
+18:56 - call the the the EPA to
+18:59 - take the snapshot so this is the code
+19:02 - that I will use let me copy it and move
+19:04 - it to the Lambda so I have it here and I
+19:08 - have this code saved so now let me deply
+19:12 - this
+19:13 - code and also what I need to do is I
+19:15 - need to have the variables also as part
+19:18 - of the setup so now the code is deployed
+19:21 - and what I can do is I can come back to
+19:23 - the configuration because you see these
+19:26 - all these values is what I need to
+19:28 - provide the current currently empty so I
+19:29 - do need to provide all these values so
+19:31 - let me go back to the configuration and
+19:33 - start putting all these
+19:39 - values give the horse name and this is
+19:42 - the URL I mean the what you are
+19:46 - a and and my could there be a Havoc
+19:50 - Rance a have it has a slash so this is
+19:53 - what I'm going to do hit the read in
+19:59 - see yes you can put it into the B and
+20:02 - fot as or you can just announce the cord
+20:05 - okay
+20:14 - very that's you pocket which is the the
+20:17 - Spong in the pocket is what kind of to
+20:18 - be added
+20:22 - here this part is what I'm going to be
+20:25 - putting and this is where I'm just say
+20:28 - this is daily
+20:30 - snapshots that I'm
+20:35 - doing repo name this is the repo name
+20:38 - that when you query the open search you
+20:41 - will see the repo name as part of that
+20:43 - because one elastic search opens as they
+20:45 - do whatever snapshots we have they will
+20:48 - be putting in a rep repository that is
+20:50 - created and it could be an S2 bucket sub
+20:52 - I just prefer to keep the same name so
+20:54 - you could just do
+20:57 - this and and choose the
+21:02 - rollon so this rollon has to be the open
+21:06 - search r l remember the trust
+21:08 - relationship is what we need to give so
+21:11 - let me just copy this arm from here and
+21:14 - add it in the
+21:15 - function so these are the variables we
+21:18 - provided let me hit
+21:20 - save and now let's see if this works
+21:24 - it's not going to work and that's why I
+21:26 - just wanted to show you the few extra
+21:27 - steps that I going be requir
+21:29 - and let me just give it a save this
+21:33 - setup here save it click
+21:41 - test okay so we got an error here
+21:44 - because the the open search policy is
+21:46 - what we need to update so this is where
+21:49 - you come in here open search and now we
+21:53 - here in security
+21:54 - configuration come here and hit edit and
+21:57 - this you could leave there now you see
+22:00 - this is a deny just change it to be
+22:03 - allow and uh this is where sometimes you
+22:07 - do have this issue so just give it the
+22:09 - new
+22:10 - username and
+22:15 - password I so 1 and 163 of the shouldn't
+22:20 - Bey access to this domain and I save
+22:23 - chin does take a few seconds because
+22:27 - what open such does is it's a blue green
+22:29 - M it does and if you click here it's
+22:33 - most likely spinning up even a simple
+22:35 - change it spins up a new cluster and
+22:38 - that ways you have minimal downt and the
+22:40 - DNS is automatically switched so that is
+22:42 - the beauty of using a pass compared pass
+22:45 - as a platform as a service compared to
+22:48 - you compared to infrastructure as a
+22:50 - service so that's the beauty you see
+22:52 - it's quickly done it's extra no down
+22:54 - tying and AD has taken care and the
+22:57 - backend the setup itself so now if I go
+23:00 - back to the function and run this I'll
+23:04 - be there you go so this is the error I'm
+23:06 - talking about because now what I need to
+23:08 - do is the next steps I need to open the
+23:10 - open search dashboard and do this next
+23:13 - step so let me show you that step so I
+23:17 - come here this is the domain this is the
+23:20 - UR for the open sear dashboard let me
+23:22 - see the security group setting why is it
+23:25 - not ready
+23:30 - okay so now the dashboard is up it seems
+23:33 - there was a glitch because the setup was
+23:35 - probably being created but I can give
+23:38 - you the username that I created the
+23:40 - master username and the
+23:44 - password why you to say it I be discust
+23:48 - is so this is the dashboard just taken
+23:50 - form and the dash bu is noted I could
+23:54 - just do sp on my own dismiss for now and
+23:58 - if you have seen kibana this is little
+24:00 - different from kibana but you come here
+24:03 - and you see you have this n right here
+24:06 - compared to the previous version of
+24:08 - either eight or seven it's a little
+24:10 - different but the first of these Al the
+24:12 - same I didn't find much of a difference
+24:14 - so now what we need to do is we need to
+24:16 - add this rule that the open search rule
+24:19 - that rated that
+24:21 - to in keep on Eyes Are Open such
+24:24 - dashboard as now the cor it so I come
+24:26 - here and this is where I come to the the
+24:30 - dashboard and I go to
+24:32 - security and in security I click on
+24:36 - R and what I do is there's going to be a
+24:39 - Manet snapshot rule that is there by
+24:41 - default it is
+24:43 - created this one so what I'll do is I
+24:47 - will just come here and clone this rule
+24:51 - duplicate this rule so this is where I
+24:53 - just mention it that
+24:56 - uh uh some Arena Manet snapshot some
+25:00 - Arena give it a different name keep the
+25:02 - same right because pretty much all these
+25:04 - permissions you would be requiring and
+25:06 - hit
+25:08 - create so when you do it this way you
+25:11 - will get the option of a mapped
+25:13 - users and now if I come here in the map
+25:16 - users you come here click this button
+25:18 - and now in the backend rule you need to
+25:21 - give the on or Amazon resource name of
+25:24 - this particular andure this is the one
+25:26 - you're using with the trust and you the
+25:30 - back and Ru
+25:32 - the and click the M button now what this
+25:37 - is saying is this rule has access to
+25:41 - managing the snapshots because if you V
+25:43 - collect this is the though in the
+25:46 - configuration we have
+25:49 - given this r that has been used for
+25:52 - taking the snap shots so the mess seem a
+25:55 - little confusing but if you pay
+25:56 - attention the read a little you will get
+25:58 - the hanger pet so now if I go run this
+26:02 - test let's see if this
+26:05 - works I gu is there is still an arrow so
+26:09 - admin repository put is not there so let
+26:13 - us go back and check this particular
+26:17 - rule it does have
+26:20 - plaster and that is where some pod
+26:22 - missions seem to read Miss apparently
+26:25 - adding a new that other index the rule
+26:28 - Min
+26:29 - [Laughter]
+26:34 - snapshot this one I did add this
+26:36 - permission because you see this is the
+26:38 - ER apparently that isn't that has not
+26:41 - helped so let me know try I see another
+26:45 - rule out there the dis access I see it
+26:49 - does seem to provide full access I don't
+26:51 - know what to be de building in this
+26:52 - video but I think you get the point you
+26:53 - to naked find real access control of f
+26:56 - GC you can see which for which fow a
+26:59 - mission is missing but you could do the
+27:00 - same you could come here click this do a
+27:04 - duate give a d and give it what
+27:08 - convention you want to use follow that
+27:11 - and yes choose
+27:14 - create I come here map
+27:17 - users and in back draw let me get the
+27:21 - same
+27:26 - here and give it to you and say
+27:29 - and map now let's see if this
+27:32 - works so I have this and set up and I
+27:37 - come here and let me hit test cuz
+27:41 - closely looking at this Arrow this is
+27:43 - for the other R the land Ru it seems is
+27:47 - the K back let me take this on of this
+27:51 - one and I have I little in see manage
+27:56 - Snapchat here man snap track Arena I
+27:58 - don't need to go to full access I'll
+28:00 - here need grab per Mission but let's see
+28:02 - if this works I have to GRA with the
+28:04 - rules as part of this mapping let me H
+28:07 - map and let's see if this
+28:11 - works I think it is because take 4
+28:14 - seconds I could you do some other exp
+28:16 - exception fail to verify reposit
+28:20 - Tre snapshot is not
+28:23 - opas has three get up to okay so this is
+28:26 - the open search snapshot
+28:29 - Rule and this is the
+28:31 - permission it's saying this particular
+28:35 - permission I okay I took off the this is
+28:38 - where I need to edit actually that is
+28:40 - where I had put the start object because
+28:42 - of these issues let me just go back and
+28:44 - do the start of turny I start off I can
+28:48 - just put
+28:49 - it get out here and I need to get other
+28:54 - things SK so this is what it is required
+28:57 - it next add you save changes now let's
+29:01 - run it
+29:08 - again
+29:11 - there Andre Source a could da
+29:16 - snapshots this is where it is not kit
+29:23 - object so just saying is very R look at
+29:27 - the edit
+29:30 - properly open Snapshot TR is not a and
+29:34 - this is the one and oh this one also I
+29:37 - have to good okay my bad so what the
+29:40 - ones I had what did there no I did
+29:44 - actually and
+29:46 - uh where's
+29:48 - the there now so let me just had it here
+29:53 - sometimes you do need to put the whole
+29:56 - thing um
+29:59 - but for some reason I doubt this is
+30:00 - going to
+30:09 - work let see this make some different
+30:14 - difference get action okay there you go
+30:18 - maybe it took some time for the changes
+30:21 - to be propagated but now if I come here
+30:24 - in S3
+30:26 - bucket I will be able to see few objects
+30:29 - in here okay there so it creates a
+30:31 - folder there snapshots and this is where
+30:34 - it is taking the data here there is no
+30:37 - data in my domain if I come here I can
+30:40 - see there isn't there's a a little bit
+30:42 - of but there is not much by little bit
+30:44 - of detail there 7.7 GB uh this is the
+30:48 - space actually there but is this such
+30:50 - aable is just 12 right so and this is
+30:52 - where I can come here in in the
+30:54 - dashboard and I can come and I can go to
+30:58 - index management this is a nice G you
+31:01 - can come here and see the you can always
+31:04 - put a snapshot policy but the indices is
+31:07 - one way you can go about doing
+31:10 - it action and you can see the the the
+31:16 - indices that I created as part of the
+31:18 - setup as well over here so repositories
+31:21 - if you want you can f the repositories
+31:22 - over here and you will see the daily
+31:24 - snapshot repositories there this is the
+31:27 - in cre a default repository the issue
+31:30 - and this is all this is also hourly but
+31:32 - the issue with this is that that this is
+31:35 - only for them in the region you can
+31:37 - restore it and in the same cluster say
+31:40 - if I have a d and if say the I want to
+31:42 - spin up using the snapshot another
+31:44 - cluster I will not be able to do using
+31:47 - this automated set up that aan you will
+31:50 - of course need to reach out to e because
+31:52 - they control this
+31:54 - data so this was how you can do the
+31:58 - setting of it and since I'm here let me
+32:00 - to show you a few other things like
+32:02 - these are the snapshots that are that
+32:04 - you can see they will be taken as part
+32:06 - of the setup here right so this is you
+32:08 - see the daily snapshot I took out here
+32:10 - this it has the name set up out here so
+32:13 - you we can go about doing it as well as
+32:15 - the indices as well and if you want we
+32:17 - can create the snapshot policy to delete
+32:20 - the snapshot here so I can just keep
+32:23 - like a daily snapshot and I can just
+32:25 - have it uh the snapshot vision and I can
+32:29 - have the setup as well
+32:31 - here so with this I hope I was able to
+32:35 - provide a good overview on how using
+32:38 - Lambda using serus architecture you can
+32:41 - go about creating a snapshot uh oh here
+32:44 - right so so I hope you were able to
+32:47 - follow along and see how we were able to
+32:49 - use cus architecture and have automated
+32:52 - snapshat life I want over here I could
+32:55 - always add a trigger when I could do a d
+32:58 - harly or any schedule that is here like
+33:01 - can I could show you the setup out here
+33:03 - I could choose from EV bridge and I
+33:06 - could put a with a new room and the
+33:11 - trigger and get this me and schedule and
+33:14 - just choose a v of
+33:21 - B i' only took the space deliv and then
+33:25 - I could do add the create this trigger
+33:28 - for me that will kick off daily I don't
+33:31 - need to do it because I just I'm going
+33:33 - to be deleting this so but I hope you
+33:36 - the find that you can kind of trigger it
+33:38 - automatically so this
+33:40 - was now since I showed you already using
+33:43 - the dashboard in the dashboard itself
+33:46 - spping with open search they have
+33:48 - provided this option to take the snap
+33:50 - shots from the console as word form you
+33:52 - can come here you can come to this index
+33:55 - setup you can and you can click on
+33:57 - Snapchat management you can come here
+34:00 - create a policy for the Snapchat now you
+34:02 - can give a daily Snapchat
+34:05 - policy it's a little simpler and you can
+34:08 - give a description you want the specific
+34:09 - indices you want but now you can choose
+34:12 - all all indices the repository for the
+34:15 - snapshots and the frequency that you
+34:18 - want to daily what is the time it does
+34:20 - what is the retention period of it how
+34:22 - many days you want it to be restored is
+34:24 - it like 7 Days small too Hab you could
+34:26 - put it here remember of snapshots
+34:28 - minimum
+34:29 - one as three and you can also have
+34:32 - notification in Needwood save for
+34:34 - snapshot as F you can have a channel
+34:37 - this is you can create a channel as part
+34:39 - of the setup where you can have this
+34:41 - different when it is Amazon SNS you can
+34:43 - have teams email then you can get a
+34:46 - notification if snapshot has failed now
+34:50 - this can be like honorous as well but
+34:53 - also a simpler one where you can have it
+34:55 - you can also change this to the hours if
+34:57 - you want so you can have both hourly and
+35:00 - daily snapshot set up natively as well
+35:03 - the only thing is that need to see where
+35:06 - the snapshot was persistent because it
+35:07 - seemed is going to be stored somewhere
+35:09 - within while with the S3 you could see
+35:12 - you will have a lot more flexibility
+35:14 - especially when it comes to Dr Disaster
+35:16 - Recovery where you were able to
+35:18 - replicate the data so with this I'll let
+35:21 - you be and I'll let you play along with
+35:23 - the different approaches that I
+35:24 - explained and you can study the yourself
+35:28 - and Bic think you can read the
+35:30 - documentation this is the one subject uh
+35:33 - but please drop in your comment question
+35:36 - and if you have any clarification we try
+35:39 - to get back to you but as usual please
+35:41 - like subscribe share the channel
+35:44 - subscribe to our newsletter and look out
+35:46 - for the next topic next week thank you
+35:49 - and have a great day
+
+
+Automate Your OpenSearch/Elasticsearch Backups with S3 and Lambda: A Complete Guide
+ November 18, 2024
+
+In the world of data management and cloud computing, ensuring data security through regular backups is crucial. OpenSearch and Elasticsearch provide robust mechanisms to back up data using snapshots, offering several approaches to cater to different operational needs. This blog post will walk you through setting up and managing snapshots using AWS, with detailed steps for both beginners and advanced users.
+
+
+
+
+Introduction to Snapshots in OpenSearch and Elasticsearch
+
+Snapshots are point-in-time backups of your OpenSearch or Elasticsearch data. By taking snapshots at regular intervals, you can ensure your data is always backed up, which is especially important in production environments. Snapshots can be scheduled to run automatically, whether hourly, daily, or at another preferred frequency, making it easy to maintain a stable backup routine.
+
+
+Setting Up an OpenSearch Cluster on AWS
+
+Before diving into snapshot creation, its essential to set up an OpenSearch cluster. Here is how:
+
+AWS Console Access: Begin by logging into your AWS Console and navigating to OpenSearch.
+Cluster Creation: Create a new OpenSearch domain (essentially your cluster) using the "Easy Create" option. This option simplifies the setup process, especially for demonstration or learning purposes.
+Instance Selection: For this setup, select a lower instance size if you are only exploring OpenSearch features and dont require high memory or compute power. For this demo, an m5.large instance with minimal nodes is sufficient.
+
+Configuring the Cluster
+
+When configuring the cluster, adjust the settings according to your requirements:
+
+
+Memory and Storage
+
+
+Memory and Storage: Set minimal storage (e.g., 10 GB) to avoid unnecessary costs.
+Node Count: Choose a single-node setup if you are only testing the system.
+Access Control: For simplicity, keep public access open, though in production, you should configure a VPC and control access strictly.
+
+Snapshot Architecture: AWS Lambda and S3 Buckets
+
+ Snapshot Architecture
+
+
+AWS provides a serverless approach to managing snapshots via Lambda and S3 buckets. Here is the basic setup:
+
+Create an S3 Bucket: This bucket will store your OpenSearch snapshots.
+
+S3 Bucket
+
+
+Lambda Function for Snapshot Automation: Use AWS Lambda to automate the snapshot process. Configure the Lambda function to run daily or at a frequency of your choice, ensuring backups are consistent and reliable.
+
+Lambda Function
+
+
+Writing the Lambda Code
+
+For the Lambda function, Python is a convenient choice, but you can choose other languages as well. The Lambda function will connect to OpenSearch, initiate a snapshot, and store it in the S3 bucket. Here is a simple breakdown of the code structure:
+
+import boto3, os, time
+import requests
+from requests_aws4auth import AWS4Auth
+from datetime import datetime
+import logging
+
+from requests.adapters import HTTPAdapter, Retry
+
+# Set the global variables
+# include https:// and trailing /
+host = str(os.getenv('host'))
+region = str(os.getenv('region','eu'))
+s3Bucket = str(os.getenv('s3Bucket'))
+s3_base_path = str(os.getenv('s3_base_path','daily'))
+s3RepoName = str(os.getenv('s3RepoName'))
+roleArn = str(os.getenv('roleArn'))
+
+service = 'es'
+credentials = boto3.Session().get_credentials()
+awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, service, session_token=credentials.token)
+
+s3 = boto3.client('s3')
+
+def lambda_handler(event, context):
+    datestamp = datetime.now().strftime('%Y-%m-%dt%H:%M:%S')
+
+    # Register repository
+    # the Elasticsearch API endpoint
+
+    path = '_snapshot/'+s3RepoName
+    url = host + path
+
+    snapshotName = 'snapshot-'+datestamp
+
+    # Setting for us-east-1. Comment below if another region
+    payload = {
+    "type": "s3",
+    "settings": {
+        "bucket": s3Bucket,
+        "base_path": s3_base_path, 
+        "endpoint": "s3.amazonaws.com",
+        "role_arn": roleArn
+        }
+    }
+
+    headers = {"Content-Type": "application/json"}
+
+    r = requests.put(url, auth=awsauth, json=payload, headers=headers)
+
+    print(r.status_code)
+    print(r.text)
+
+    # Take snapshot - Even though this looks similar to above, but this code is required to take snapshot.    
+    # Snapshot to take with datestamp concatanetated - this creates separate snapshots
+    path = '_snapshot/'+s3RepoName+'/'+snapshotName
+
+    url = host + path
+
+    string = snapshotName
+    bucket_name = s3Bucket
+    
+	
+    s3 = boto3.resource("s3")
+    s3.Bucket(bucket_name).put_object(Key=s3_path, Body=string)
+    print(f"Created {s3_path}")
+    ### Text File copying ends here
+
+    while True:
+        response = requests.put(url, auth=awsauth)
+        status_code = response.status_code
+        print("status_code == "+str(status_code))
+        if status_code >= 500:
+            # Hope it won't 500 a little later
+            print("5xx thrown. Sleeping for 200 seconds.. zzzz...")
+            time.sleep(200)
+        else:
+            print(f"Snapshot {snapshotName} successfully taken")
+            break
+    
+    print(r.text)
+Copy
+Snapshot API Call: The code uses the OpenSearch API to trigger snapshot creation. You can customize the frequency to take snapshots.
+Error Handling: In scenarios where snapshots take long, retries and error handling are implemented in to manage API call failures.
+Permissions Setup: Grant your Lambda function the necessary permissions to access OpenSearch and the S3 bucket. This includes setting up roles and policies in AWS Identity and Access Management (IAM).
+Invocation Permissions: Lambda function will need to have role that allows access to OpenSearch domain. The role should allow Lambda to upload snapshots to s3 bucket:
+
+{
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::<BUCKET-NAME>/*"
+            ]
+        }
+Copy
+
+Creating an AWS Lambda Layer for the Requests Library
+To create a custom AWS Lambda layer specifically for the requests library, follow these steps. This guide will help you set up the requests package as a Lambda layer so it can be reused across multiple Lambda functions.
+
+Follow these steps to create a custom AWS Lambda layer that includes the requests library.
+
+
+Step 1: Prepare the Requests Dependency
+
+Since Lambda layers require dependencies to be packaged separately, we need to install the requests library in a specific structure.
+
+
+Set Up a Local Directory
+Create a folder structure for installing the dependency.
+
+
+mkdir requests-layer
+cd requests-layer
+mkdir python
+Copy
+
+Install the Requests Library
+Use pip to install requests into the python folder:
+
+
+pip install requests -t python/
+Copy
+
+Verify Installation
+Check that the python directory contains the installed requests package:
+
+
+ls python
+Copy
+You should see a folder named requests, confirming that the package was installed successfully.
+
+
+Step 2: Create a Zip Archive of the Layer
+After installing the dependencies, zip the python directory:
+
+
+zip -r requests-layer.zip python
+Copy
+
+This creates a requests-layer.zip file that you will upload as a Lambda layer.
+
+
+Step 3: Upload the Layer to AWS Lambda
+
+Open the AWS Lambda Console
+Go to the AWS Lambda Console.
+Create a New Layer
+
+ New Layer
+
+
+Select Layers from the left-hand navigation.
+
+layer
+
+
+Click Create layer.
+Configure the Layer
+Name: Provide a name like requests-layer.
+Description: Optionally, describe the purpose of the layer.
+Upload the .zip file: Choose the requests-layer.zip file you created.
+Compatible runtimes: Choose the runtime(s) that match your Lambda function, such as Python 3.8, Python 3.9, or Python 3.10. 11.Create the Layer
+Click Create to upload the layer.
+
+Step 4: Add the Layer to Your Lambda Function
+
+1.Open Your Lambda Function 2.In the Lambda Console, open the Lambda function where you want to use requests. 3.Add the Layer 4.In the Layers section, click Add a layer. 5.Select Custom layers and choose the requests-layer. 6.Select the specific version (if there are multiple versions). 7.Click Add.
+
+
+OpenSearch Dashboard Configuration
+
+ OpenSearch
+
+
+The OpenSearch Dashboard (formerly Kibana) is your go-to for managing and monitoring OpenSearch. Here is how to set up your snapshot role in the dashboard:
+
+
+Access the Dashboard: Navigate to the OpenSearch Dashboard using the provided domain link.
+Role Setup: Go to the security settings and create a new role for managing snapshots. Grant this role permissions to access the necessary indices and S3 bucket. Following is the role that needs to be created:
+Trust Policy:
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": [
+                    "opensearch.amazonaws.com",
+                    "es.amazonaws.com"
+                ]
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+Copy
+
+Role Policy:
+{
+   "Version": "2012-10-17",
+   "Statement": [
+       {
+           "Effect": "Allow",
+           "Action": "s3:ListBucket",
+           "Resource": [
+               "arn:aws:s3:::BUCKET-NAME"
+           ]
+       },
+       {
+           "Effect": "Allow",
+           "Action": [
+               "s3:*Object"
+           ],
+           "Resource": [
+               "arn:aws:s3:::BUCKET-NAME/*"
+           ]
+       },
+       {
+           "Sid": "ESaccess",
+           "Effect": "Allow",
+           "Action": [
+               "es:*"
+           ],
+           "Resource": [
+               "arn:aws:es:eu-west-2:<ACCOUNT-NUMBER>:domain/*"
+           ]
+       }
+   ]
+}
+Copy
+
+Mapping the Role: Map the new role to your Lambda functions IAM role to ensure seamless access.
+
+ Mapping the Role
+
+
+Setting Up Snapshot Policies in the Dashboard
+
+The OpenSearch Dashboard allows you to create policies for managing snapshots, making it easy to define backup schedules and retention periods. Here is how:
+
+
+Policy Configuration: Define your backup frequency (daily, weekly, etc.) and the retention period for each snapshot.
+Retention Period: Set the maximum number of snapshots to keep, ensuring that old snapshots are automatically deleted to save space.
+
+Channel
+
+
+Notification Channel: You can set up notifications (e.g., via Amazon SNS) to alert you if a snapshot operation fails.
+
+Testing and Troubleshooting Your Snapshot Setup
+
+Once your setup is complete, it is time to test it:
+
+Run a Test Snapshot: Trigger your Lambda function manually and check your S3 bucket for the snapshot data.
+Verify Permissions: If you encounter errors, check your IAM roles and permissions. Snapshot failures often occur due to insufficient permissions, so make sure both the OpenSearch and S3 roles are configured correctly.
+Monitor Logs: Use CloudWatch logs to review the execution of your Lambda function, which will help in troubleshooting any issues that arise.
+
+Disaster Recovery and Restoring Snapshots
+
+In the unfortunate event of data loss or a disaster, restoring your data from snapshots is straightforward. Here is a simple guide:
+
+New Cluster Setup: If your original cluster is lost, create a new OpenSearch domain.
+Restore Snapshot: Use the OpenSearch API to restore the snapshot from your S3 bucket.
+Cluster Health Check: Once restored, check the health of your cluster and validate that your data is fully recovered.
+
+Conclusion
+
+Using AWS Lambda and S3 for snapshot management in OpenSearch provides a scalable and cost-effective solution for data backup and recovery. By setting up automated snapshots, you can ensure that your data is consistently backed up without manual intervention. With the additional security and monitoring tools provided by AWS, maintaining the integrity and availability of your OpenSearch data becomes a manageable task.
+
+
+Explore the various options within AWS and OpenSearch to find the configuration that best fits your environment. And as always, remember to test your setup thoroughly to prevent unexpected issues down the line.

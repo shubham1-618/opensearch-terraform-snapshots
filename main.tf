@@ -224,4 +224,27 @@ resource "null_resource" "create_snapshot_management_policy" {
   }
 
   depends_on = [null_resource.register_snapshot_repository]
+}
+
+resource "aws_iam_user" "opensearch_user" {
+  name = "opensearch-user"
+  force_destroy = true
+}
+
+resource "aws_iam_user_login_profile" "opensearch_user" {
+  user    = aws_iam_user.opensearch_user.name
+  pgp_key = "keybase:username" // Replace with your PGP key or remove if not needed
+  password_reset_required = false
+  // If you want to set a specific password, use 'password = "YourPassword123!"'
+}
+
+resource "aws_iam_access_key" "opensearch_user" {
+  user = aws_iam_user.opensearch_user.name
+}
+
+resource "null_resource" "map_iam_user_to_role" {
+  provisioner "local-exec" {
+    command = "python map_iam_user.py ${aws_opensearch_domain.main.endpoint} ${var.master_user_name} ${var.master_user_password} ${aws_iam_user.opensearch_user.arn} all_access"
+  }
+  depends_on = [aws_iam_user.opensearch_user, aws_opensearch_domain.main]
 } 

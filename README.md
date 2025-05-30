@@ -1,6 +1,6 @@
 # OpenSearch Snapshot & Restore with Terraform
 
-This project implements automated snapshot and restore capabilities for Amazon OpenSearch using Terraform and the native OpenSearch Snapshot Management feature.
+This project implements automated snapshot and restore capabilities for Amazon OpenSearch using Terraform and the native OpenSearch Snapshot Management feature. It now also automates IAM user creation and mapping to OpenSearch roles.
 
 ## Features
 
@@ -11,16 +11,18 @@ This project implements automated snapshot and restore capabilities for Amazon O
 - Implements OpenSearch's Snapshot Management for automated hourly snapshots
 - Configures Index State Management (ISM) policies for hot-to-warm index transitions
 - Provides scripts for manual snapshot operations and restoration
+- **Automatically creates an IAM user and maps it to an OpenSearch role using the Security API**
 
 ## File Structure
 
-- `main.tf` - Terraform configuration for OpenSearch domain, VPC, S3 bucket, and IAM roles
+- `main.tf` - Terraform configuration for OpenSearch domain, VPC, S3 bucket, IAM roles, IAM user, and automation
 - `variables.tf` - Terraform variables definitions
 - `outputs.tf` - Terraform output definitions
 - `snapshot_repository.py` - Python script to register a snapshot repository
 - `snapshot_policy.py` - Python script to create index templates, ISM policies, and snapshot management policies
 - `list_snapshots.py` - Python script to list available snapshots
 - `restore.py` - Python script to restore indices from snapshots
+- `map_iam_user.py` - **Python script to map the IAM user to an OpenSearch role automatically**
 - `requirements.txt` - Python dependencies
 
 ## Prerequisites
@@ -46,7 +48,7 @@ Create a `terraform.tfvars` file with the following variables:
 | `allowed_cidr` | CIDR block allowed to access OpenSearch | 0.0.0.0/0 | No |
 
 Example `terraform.tfvars`:
-```
+```hcl
 aws_region = "us-east-1"
 opensearch_domain_name = "my-domain"
 snapshot_bucket_name = "my-opensearch-snapshots-123"  # Must be globally unique
@@ -92,80 +94,50 @@ This will create:
 - VPC with subnets and security groups
 - S3 bucket for snapshots
 - IAM roles for OpenSearch to access S3
+- **IAM user for OpenSearch access**
+- **Automatically map the IAM user to the `all_access` role in OpenSearch using the Security API**
 
-### 4. Register Snapshot Repository
+### 4. How the Automation Works
 
-**Option 1:** Using Terraform variable
-```sh
-terraform apply -var="create_snapshot=true"
-```
+- After Terraform creates the IAM user and OpenSearch domain, it runs `map_iam_user.py` automatically.
+- This script uses the OpenSearch Security API to add the IAM user's ARN as a backend role to the `all_access` role.
+- No manual mapping in OpenSearch Dashboards is required.
 
-**Option 2:** Manually run the script
-```sh
-python snapshot_repository.py <opensearch-endpoint> <s3-bucket> <role-arn> <region> <username> <password>
-```
+### 5. Outputs
 
-Example:
-```sh
-python snapshot_repository.py search-my-domain-xxxxxx.us-east-1.es.amazonaws.com my-opensearch-snapshots-123 arn:aws:iam::123456789012:role/opensearch-snapshot-role us-east-1 admin YourPassword123!
-```
+After `terraform apply`, you will see outputs including:
+- OpenSearch endpoint
+- Snapshot bucket name
+- Snapshot role ARN
+- **IAM user ARN**
+- **IAM user access key and secret** (for programmatic access)
 
-### 5. Create Snapshot Management Policy
+### 6. Accessing OpenSearch
 
-**Option 1:** Using Terraform variable
-```sh
-terraform apply -var="create_snapshot_policy=true"
-```
+- Use the OpenSearch endpoint output to access OpenSearch Dashboards.
+- Log in as the master user (from your variables) for full admin access.
+- The IAM user is now mapped to the `all_access` role and can be used for API access or mapped to other roles as needed.
 
-**Option 2:** Manually run the script
-```sh
-python snapshot_policy.py <opensearch-endpoint> <region> <username> <password>
-```
+### 7. Manual Operations (Optional)
 
-Example:
-```sh
-python snapshot_policy.py search-my-domain-xxxxxx.us-east-1.es.amazonaws.com us-east-1 admin YourPassword123!
-```
-
-## Snapshot Management
-
-The solution implements the Snapshot Management feature as described in the [AWS Blog](https://aws.amazon.com/blogs/big-data/unleash-the-power-of-snapshot-management-to-take-automated-snapshots-using-amazon-opensearch-service/).
-
-### Key Components:
-
-1. **Index Templates**
-   - Automatically assigns the `hot` alias to new indices matching the pattern `log*`
-
-2. **Index State Management (ISM) Policy**
-   - Moves indices from hot to warm storage after 30 days
-   - Updates index aliases during migration
-
-3. **Snapshot Management Policy**
-   - Takes hourly snapshots of all "hot" indices
-   - Retains up to 48 snapshots (2 days worth)
-   - Cleans up old snapshots automatically
-
-## Manual Operations
-
-### List Available Snapshots
+#### List Available Snapshots
 ```sh
 python list_snapshots.py <opensearch-endpoint> <repo-name> <username> <password>
 ```
 
-Example:
-```sh
-python list_snapshots.py search-my-domain-xxxxxx.us-east-1.es.amazonaws.com s3-repo admin YourPassword123!
-```
-
-### Restore an Index from a Snapshot
+#### Restore an Index from a Snapshot
 ```sh
 python restore.py <opensearch-endpoint> <repo-name> <snapshot-name> <index-name> <username> <password>
 ```
 
-Example:
-```sh
-python restore.py search-my-domain-xxxxxx.us-east-1.es.amazonaws.com s3-repo snapshot-20240607120000 logs-2024-06-07 admin YourPassword123!
-```
+### 8. Customizing Role Mapping
+
+- By default, the IAM user is mapped to the `all_access` role.
+- To map to a different role, change the role name in the `null_resource` in `main.tf` and re-apply.
+- You can also use `map_iam_user.py` manually:
+  ```sh
+  python map_iam_user.py <opensearch-endpoint> <master-username> <master-password> <iam-user-arn> <role-name>
+  ```
 
 ## Troubleshooting
 
@@ -185,12 +157,23 @@ python restore.py search-my-domain-xxxxxx.us-east-1.es.amazonaws.com s3-repo sna
    - Check that the index name is correct
    - Ensure sufficient storage space in the OpenSearch domain
 
-### Verifying Snapshot Status
+4. **IAM User Mapping Fails**
+   - Check the output of the `map_iam_user.py` script for errors
+   - Ensure the OpenSearch endpoint, master username, and password are correct
+   - Make sure the OpenSearch domain is fully available before mapping
+   - You can re-run the script manually if needed
 
-You can verify snapshot status in the OpenSearch Dashboards:
-1. Access OpenSearch Dashboards at `https://<opensearch-endpoint>/_dashboards/`
-2. Navigate to **Snapshots Management**
-3. Check repository and snapshot status
+### Verifying Snapshot and IAM User Mapping Status
+
+- **Snapshot:**
+  1. Access OpenSearch Dashboards at `https://<opensearch-endpoint>/_dashboards/`
+  2. Navigate to **Snapshots Management**
+  3. Check repository and snapshot status
+
+- **IAM User Mapping:**
+  1. Access OpenSearch Dashboards as the master user
+  2. Go to **Security → Roles → all_access → Mapped users**
+  3. You should see the IAM user's ARN listed
 
 ## Notes
 
@@ -198,6 +181,10 @@ You can verify snapshot status in the OpenSearch Dashboards:
 - Snapshots of indices are taken every hour using the OpenSearch Snapshot Management feature
 - The restored index will be named `restored_<original-index-name>` to avoid conflicts
 - For production use, consider strengthening the IAM policies and security settings
-- Applying `terraform destroy` will remove all resources, including the S3 bucket with snapshots
+- Applying `terraform destroy` will remove all resources, including the S3 bucket with snapshots and the IAM user
+
+---
+
+**This setup is now fully automated for OpenSearch, IAM, and snapshot management!**
 
 
